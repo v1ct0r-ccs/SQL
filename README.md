@@ -146,7 +146,7 @@ create table pessoa (
     tadatz, timestamptz,
     data2 date, 
     bool boolean
-);0
+);
 ```
 
 #### Sintaxe Alter Table
@@ -155,7 +155,7 @@ create table pessoa (
 
 - **Alter Table** - *rename column*
 
-Comando usado para renomear uma coluna em uma tabela existente.
+Comando usado para renomear uma coluna numa tabela existente.
 ```
 ALTER TABLE table_name
 RENAME COLUMN column_name
@@ -164,7 +164,7 @@ TO new_column_name;
 
 - **Alter Table** - *add column*
 
-Comando usado para adicionar uma coluna em uma tabela existente.
+Comando usado para adicionar uma coluna numa tabela existente.
 
 ```
 ALTER TABLE table_name
@@ -181,7 +181,7 @@ DROP COLUMN column_name;
 
 - **Alter Table** - *defaults values*
 
-Comando usado para adicionar ou remover valores defaults em uma coluna em uma tabela existente.
+Comando usado para adicionar ou remover valores defaults numa coluna numa tabela existente.
 
 ```
 ALTER TABLE table_name
@@ -201,7 +201,7 @@ SET NOT NULL; | DROP NOT NULL;
 
 - **Alter Table** - *constraint check*
 
-Comando usado para adicionar ou remover uma constraint(*restrição*) em uma coluna em uma tabela existente.
+Comando usado para adicionar ou remover uma constraint(*restrição*) numa coluna numa tabela existente.
 
 ```
 ALTER TABLE table_name
@@ -349,4 +349,167 @@ select * from pessoa where nome in ('Victor', 'Rodrigo');
 
 ```
 select * from pessoa where idade between 1 and 40;
+```
+
+# SQL - *Parte II*
+
+## Index
+
+É uma ferramenta de otimização que pode aumentar a performance de consulta nas tabelas.
+
+```
+CREATE INDEX index_name ON table_name(column_name);
+```
+
+## Constraints
+
+Sao declarações de "restrições" ou "bloquios" e têm como fundamento a imposição de alguma regra de validação aos dados.
+
+São separadas em: **Key** e **columns** constraints.
+
+### Key Constraints
+
+Definem a criação de Chaves e Relacionamentos existentes entre tabelas. São eles:
+
+- Primary Key
+- Foreign Key
+
+#### Primary Key
+
+Automaticamente define que os valores das colunas em questão estarão presentes num índice (**INDEXED**), ocorrendo somente uma única vez (**UNIQUE**). Esse índice deve ser preliminarmente definido como não podendo ser **NULOS**. Esta _constraint_ se adequa perfeita e absolutamente ao conceito de chave primária para uma tabela.
+
+```
+create table tb_pessoa (
+    id bigint not null,
+    nome varchar(50) not null,
+    idade integer constraint check_idade CHECK (idade > 0 and idade < 120),
+    sexo varchar(1) not null CHECK (sexo IN ('M', 'F')),
+    constraint pk_id_pessoa primary key (id)
+);
+```
+
+```
+alter table tb_pessoa
+add constraint pk_id_pessoa primary key (id);
+```
+
+#### Foreign Key
+
+Automaticamente define que os valores das colunas em questão obrigatoriamente estarão presentes no índice da **PRIMARY KEY** da tabela a que se refere. Uma ou mais colunas que sofrem esta imposição pode admitir valores Nulos (**NULLABLE**) e quando tiverem valor, geralmente ele se repete ao longo da tabela.
+
+```
+create table tb_pessoa (
+id bigint not null,
+nome varchar(50) not null,
+idade integer constraint check_idade CHECK (idade > 0 and idade < 120),
+sexo varchar(1) not null CHECK (sexo IN ('M', 'F')),
+constraint pk_id_pessoa primary key (id)
+constraint fk_id_estado_pessoa foreign key (id_estado) references tb_estado(id)
+);
+```
+
+```
+alter table tb_pessoa
+add constraint fk_id_estado_pessoa foreign key (id_estado) references tb_estado(id);
+```
+
+## Constraints(_Unique_) e Sequences
+
+### Column constraints
+
+Bloqueios (restrições) a valores operados numa coluna. São eles:
+
+- **NOT NULL**: Impõe a obrigatoriedade de ocorrência de valor para a coluna;
+- **DEFAULT**: Aplica uma constante quando da não ocorrência de valor para uma coluna;
+- **CHECK**: Valida o valor a ser admitido por uma coluna, contra uma regra (expressão/equação);
+- **Unique**: Impõe à coluna que não serão admitidos valores repedtidos nela;
+    - ```
+      alter table tb_pessoa add constraint uq_cpf_pessoa unique (cpf);
+      ```
+- **INDEX**: Impõe à coluna que os seus valores participarãoade um índice;
+
+### Sequences
+
+É uma sequência de valores que pode ser utilizado em colunas com autoincremento de valores.
+
+```
+CREATE SEQUENCE sq_pessoa
+START 1
+INCREMENT 1
+OWNED BY tb_pessoa.id;
+
+SELECT nextval ('sq_pessoa');
+
+SELECT curval ('sq_pessoa');
+
+insert intro tb_pessoa (id, nome, idade, sexo, cpf)
+values (nextval('sq_pessoa'),'Victor', 29,'M', 1054627);
+```
+
+## DQL - Joins
+
+Join é uma forma de consulta juntando as informações de duas ou mais tabelas num único resultado. São elas:
+
+- Inner join
+- Left join
+- Right join
+- Full join
+- Cross join
+
+### Inner Join
+
+O Inner join combina os valores da tabela 1 e da tabela 2, compara a coluna em questão no sql e verifica se os valores são iguais. Caso seja igual, é feita uma junção das duas informações e os valores que não são iguais são ignorados e não são retorados na consulta.
+
+```
+select *
+from tb_pessoa p, tb_estado e
+where p.id_estado = e.id;
+
+select p.id, p.nome pessoa, e.id, e.nome estado
+from tb_pessoa p, tb_estado e
+where p.id_estado = e.id;
+
+select *
+from tb_pessoa p
+inner join tb_estado e on e.id = p.id_estado;
+```
+
+### Left Join
+
+O Left join combina os valores da tabela 1 e tabela 2, compara a coluna em questão no sql e verifica se os valores são iguais. Caso seja é feita uma junção das duas informações e os resultados que nõa sao iguais, são retornados mesmo assim, mas com valores da correspondência da outra tabela como nulos. Esses valores retornados são da tabela da esquerda e os valores nulos ficam do lado da tabela da direita.
+
+```
+select *
+from tb_pessoa p
+left join tb_estado e on e.id = p.id_estado;
+```
+
+### Right Join
+
+O Right join combina os valores da tabela 1 e da tabela 2, compara a coluna em questão no sql e verifica se os valores são iguais. Caso seja, é feita uma junção das duas informações e os resultados que não são iguais, são retornados mesmo assim, mas com os valores da correspondência da outra tabela como nulos. Esses valores são retornados são da tabela da direita e os valores nulos ficam do lado esquerdo da tabela.
+
+```
+select *
+from tb_pessoa p
+right join tb_estado e on e.id = p.id_estado;
+```
+
+### Full Join
+
+O Full join é parecido com o left e right, trazendo todos os registros e os que não tiverem par, iram ficar nulos ou do lado esquerdo, ou do lado direito.
+
+```
+select *
+from tb_pessoa p
+full join tb_estado e on e.id = p.id_estado;
+```
+
+### Cross Join
+
+O Cross join é um dos mais perigosos para se ultilizar, pois ele tràs todos os registros da tabela do join repetindo as informações para cada colula dos dois lados.
+
+```
+select *
+from tb_pessoa
+cross join tb_estado;
 ```
